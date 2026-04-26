@@ -1,10 +1,11 @@
 import streamlit as st
+import datetime #Para aumentar os limites de data.
 
 st.title("Cadastrar Novo Ativo")
 st.subheader("Adicione um novo equipamento ao sistema")
 
 #Formulário
-with st.form(key="form_cadastro_ativo"):
+with st.form(key="form_cadastro_ativo", enter_to_submit=False):
 
     #Colunas
     col1, col2 = st.columns(2)
@@ -18,9 +19,18 @@ with st.form(key="form_cadastro_ativo"):
 
     #Segunda coluna da direita
     with col2:
-        data_compra = st.date_input("Data de Compra")
+        data_minima = datetime.date(2000, 1, 1)
+        data_maxima = datetime.date(2050,12, 31)
+
+        data_compra = st.date_input(
+            "Data de Compra",
+            format="DD/MM/YYYY",
+            min_value=data_minima,
+            max_value=data_maxima
+        )
         status = st.selectbox("Status do Equipamento", ["Disponível", "Em Uso", "Em Manutenção", "Descartado"])
         localizacao = st.text_input("Localização (Ex. Setor de Vendas, Almoxarifado, Etc...)")
+
 
     #Campos fora do coluna
     st.markdown("---")
