@@ -1,11 +1,19 @@
 import streamlit as st
 import datetime #Para aumentar os limites de data.
+from supabase import create_client, Client # Base do Supabase
 
+# Conexão com o banco de dados
+#chaves no arquivo secrets.toml
+url_supabase = st.secrets["SUPABASE_URL"]
+chave_supabase = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(url_supabase, chave_supabase)
+
+#Início do Front
 st.title("Cadastrar Novo Ativo")
 st.subheader("Adicione um novo equipamento ao sistema")
 
 #Formulário
-with st.form(key="form_cadastro_ativo", enter_to_submit=False):
+with st.form(key="form_cadastro_ativo", enter_to_submit=False, clear_on_submit=True):
 
     #Colunas
     col1, col2 = st.columns(2)
@@ -41,5 +49,23 @@ with st.form(key="form_cadastro_ativo", enter_to_submit=False):
     botao_salvar = st.form_submit_button("Salvar Equipamento")
 
 if botao_salvar:
-    st.success(f"Sucesso! O {tipo} da marca {marca} foi registrado.")
-    st.info(f"Número de Série Registrado: {numero_serie} | Status: {status}")
+#Lógica de Envio
+    dados_do_ativo = {
+        "tipo": tipo,
+        "marca": marca,
+        "modelo": modelo,
+        "numero_serie": numero_serie,
+        "data_compra": str(data_compra),
+        "status": status,
+        "localizacao": localizacao,
+        "historico": historico,
+        "observacoes": observacoes
+    }
+#Caso Offline
+    try:
+        resposta = supabase.table("equipamentos").insert(dados_do_ativo).execute()
+
+        st.success(f"Sucesso! O {tipo} da marca {marca} foi salvo no banco de dados.")
+        st.toast("Equipamento salvo com sucesso!", icon="💾") #Comemoração!
+    except Exception as erro:
+        st.error(f"Ops! Ocorreu um erro ao salvar o banco de dados: {erro}")
