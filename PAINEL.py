@@ -4,11 +4,18 @@ import streamlit as st
 st.set_page_config(
     page_title="RegeIT - Gestão de Equipamentos",
     page_icon="💻",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
-# Dashboard
-st.title("Painel Geral")
-st.subheader("Visão geral da sua infraestrutura de TI")
-st.write("Bem-vindo ao RegeIT! Use o menu lateral para navegar pelo sistema.")
+#Logo
+try:
+    st.sidebar.image("logo.png", use_container_width=True)
+except FileNotFoundError:
+    st.sidebar.warning("Logo não encontrada.")
 
-#Gráficos e Resumos
+# Dashboard
+st.title("Bem-vindo ao RegeIT!")
+st.subheader("Sistema de Gestão de Ativos de TI")
+st.markdown("---")
+
+st.write("Adicionar: Animações e Indicadores de Desempenho (KPIs) aparecerão aqui")

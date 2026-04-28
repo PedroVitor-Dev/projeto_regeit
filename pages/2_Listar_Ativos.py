@@ -8,10 +8,14 @@ url_supabase = st.secrets["SUPABASE_URL"]
 chave_supabase = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(url_supabase, chave_supabase)
 
+#Configuração de Cache
+@st.cache_data(ttl=60)
 def buscar_dados():
-    #Busca de Ativos
     resposta = supabase.table("equipamentos").select("*").execute()
     return resposta.data
+if st.button("🔄 Atualizar Tabela"):
+    buscar_dados.clear()
+    st.rerun() #Recarregar
 
 #Interface
 st.title("Inventário de Ativos")
