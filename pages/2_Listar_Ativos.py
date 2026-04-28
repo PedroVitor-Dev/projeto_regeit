@@ -22,60 +22,87 @@ dados = buscar_dados()
 if not dados:
     st.info("Nenhum equipamento cadastrado ainda.")
 else:
-    # Cartões de Visualização
-    cols = st.columns(3)
+    # Dataframe para facilitar filtros
+    df = pd.DataFrame(dados)
+    #Filtros e Exportação
+    with st.container(border=True):
+        st.write("🔍 **Busca e Ferramentas**")
 
-    for i, item in enumerate(dados):
-        with cols[i % 3]:
-            # Essa é a linha que cria a "borda" do cartão e organiza tudo!
-            with st.container(border=True):
-                st.write(f"### {item['tipo']}")
-                
-                # Espaço adicionado depois dos dois pontos na Marca
-                st.write(f"**Marca:** {item['marca']}")
-                
-                st.write(f"**Modelo:** {item['modelo']}")
-                st.write(f"**S/N:** `{item['numero_serie']}`")
-                
-                # cor do status
-                cor = "green" if item['status'] == "Disponível" else "orange"
-                st.markdown(f"**Status:** :{cor}[{item['status']}]")
-                
-                st.caption(f"📍 {item['localizacao']}")
+        f1,f2, f3 = st.columns([2, 1, 1])
 
-#Funcionalidade de exportar para Excel
-st.markdown("---")
-st.write("### 📥 Exportar Dados")
+        with f1:
+            busca = st.text_input("Pesquisar por Marca, Modelo ou S/N", placeholder="Ex: Dell, HP...")
+        with f2:
+            lista_tipos = ["Todos"] + sorted(df["tipo"].unique().tolist())
+            filtro_tipo = st.selectbox("Filtrar por Tipo", lista_tipos)
+        with  f3:
+            lista_status = ["Todos"] + sorted(df["status"].unique().tolist())
+            filtro_status = st.selectbox("Filtrar por Status", lista_status)
 
-df = pd.DataFrame(dados)
+        #Filtragem no Pandas
+        df_filtrado = df.copy()
+        
+        if busca:
+            # Procura o termo na marca, modelo ou número de série (sem ligar para maiúsculas)
+            mask = df_filtrado.apply(lambda row: busca.lower() in str(row['marca']).lower() or 
+                                               busca.lower() in str(row['modelo']).lower() or 
+                                               busca.lower() in str(row['numero_serie']).lower(), axis=1)
+            df_filtrado = df_filtrado[mask]
+            
+        if filtro_tipo != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["tipo"] == filtro_tipo]
+            
+        if filtro_status != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["status"] == filtro_status]
 
-df = df.rename(columns={
-        "tipo": "Tipo",
-        "marca": "Marca",
-        "modelo": "Modelo",
-        "numero_serie": "Nº de Série",
-        "data_compra": "Data de Compra",
-        "status": "Status",
-        "localizacao": "Localização",
-        "historico": "Histórico",
-        "observacoes": "Observações",
-        "data_cadastro": "Cadastrado em"
-})
+        # Botão de exportar o que está sendo filtrado
+        st.markdown("---")
+        
+        def converter_para_excel(df_to_export):
+            # Limpamos os nomes das colunas para o Excel
+            df_formatado = df_to_export.rename(columns={
+                "tipo": "Tipo", "marca": "Marca", "modelo": "Modelo",
+                "numero_serie": "Nº de Série", "data_compra": "Data de Compra",
+                "status": "Status", "localizacao": "Localização",
+                "historico": "Histórico", "observacoes": "Observações",
+                "data_cadastro": "Cadastrado em"
+            })
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df_formatado.to_excel(writer, index=False, sheet_name='Equipamentos')
+            return output.getvalue()
 
-#Transformar o Excel para Download
-def converter_para_excel(df):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Equipamentos')
-    return output.getvalue()
+        excel_data = converter_para_excel(df_filtrado)
 
-excel_data = converter_para_excel(df)
+        st.download_button(
+            label="📄 Exportar estes resultados para Excel",
+            data=excel_data,
+            file_name="inventario_filtrado_regeit.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            icon="📥",
+            use_container_width=True # Botão ocupa a largura toda para ficar fácil de clicar
+        )
 
-#Botão para Download
-st.download_button(
-        label="📄 Baixar Inventário em Excel",
-        data=excel_data,
-        file_name="inventario_regeit.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        icon="📥"
-    )
+    # Cartões Filtrados
+
+    st.write(f"Exibindo **{len(df_filtrado)}** equipamentos:")
+    
+    if df_filtrado.empty:
+        st.warning("Nenhum resultado encontrado para os filtros selecionados.")
+    else:
+        # Criamos o grid de cartões
+        dados_finais = df_filtrado.to_dict('records')
+        cols = st.columns(3)
+
+        for i, item in enumerate(dados_finais):
+            with cols[i % 3]:
+                with st.container(border=True):
+                    st.write(f"### {item['tipo']}")
+                    st.write(f"**Marca:** {item['marca']}")
+                    st.write(f"**Modelo:** {item['modelo']}")
+                    st.write(f"**S/N:** `{item['numero_serie']}`")
+                    
+                    cor = "green" if item['status'] == "Disponível" else "orange"
+                    st.markdown(f"**Status:** :{cor}[{item['status']}]")
+                    
+                    st.caption(f"📍 {item['localizacao']}")
