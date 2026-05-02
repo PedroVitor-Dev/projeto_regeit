@@ -112,13 +112,13 @@ def buscar_dados_painel():
     resposta = supabase.table("equipamentos").select("*").execute()
     return resposta.data
 
-dados = buscar_dados_painel()
+with st.spinner(" ⏳ Conectando ao banco de dados e gerando indicadores... "):
+    dados = buscar_dados_painel()
 
-# Gráficos
+#Gráficos
 if not dados:
     st.info("Não há equipamentos cadastrados para gerar estatísticas. Vá até a página de Cadastro!")
 else:
-    # Dados em tabelas
     df = pd.DataFrame(dados)
     total = len(df)
     disponiveis = len(df[df["status"] == "Disponível"])

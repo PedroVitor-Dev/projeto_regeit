@@ -21,9 +21,9 @@ with st.form(key="form_cadastro_ativo", enter_to_submit=False, clear_on_submit=T
     #Primeira coluna da esquerda
     with col1:
         tipo = st.selectbox("Tipo de Equipamento", ["Notebook", "Desktop", "Monitor", "Smartphone", "Impressora", "Servidor", "Outros"])
-        marca = st.text_input("Marca")
-        modelo = st.text_input("Modelo")
-        numero_serie = st.text_input("Número de Série")
+        marca = st.text_input("Marca", autocomplete="off")
+        modelo = st.text_input("Modelo", autocomplete="off")
+        numero_serie = st.text_input("Número de Série", autocomplete="off")
 
     #Segunda coluna da direita
     with col2:
@@ -39,16 +39,22 @@ with st.form(key="form_cadastro_ativo", enter_to_submit=False, clear_on_submit=T
         status = st.selectbox("Status do Equipamento", ["Disponível", "Em Uso", "Em Manutenção", "Descartado"])
         localizacao = st.text_input("Localização (Ex. Setor de Vendas, Almoxarifado, Etc...)")
 
-
     #Campos fora do coluna
     st.markdown("---")
-    historico = st.text_area("Histórico de Equipamento")
+    
+    # --- NOVO COMENTÁRIO: O campo de histórico manual foi removido daqui! ---
+    
     observacoes = st.text_area("Observações Adicionais")
 
     #Botão de Enviar
     botao_salvar = st.form_submit_button("Salvar Equipamento")
 
 if botao_salvar:
+    
+    #Primeira linha para o log de alteracoes
+    data_hora_agora = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+    historico_inicial = f"[{data_hora_agora}] Equipamento cadastrado no sistema com status '{status}'."
+
 #Lógica de Envio
     dados_do_ativo = {
         "tipo": tipo,
@@ -58,7 +64,7 @@ if botao_salvar:
         "data_compra": str(data_compra),
         "status": status,
         "localizacao": localizacao,
-        "historico": historico,
+        "historico": historico_inicial, # Passamos a variável automática para o banco
         "observacoes": observacoes
     }
 #Caso Offline
